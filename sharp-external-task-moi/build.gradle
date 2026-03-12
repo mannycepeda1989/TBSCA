@@ -1,0 +1,70 @@
+plugins {
+    id 'org.springframework.boot' apply false
+    id 'io.spring.dependency-management'
+    id 'org.sonarqube'
+    id 'com.diffplug.spotless'
+}
+
+subprojects {
+
+    group = "${group}"
+    version = "${version}"
+
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'org.sonarqube'
+    apply plugin: 'com.diffplug.spotless'
+
+    java.sourceCompatibility = JavaVersion.VERSION_17
+
+
+    dependencies {
+        compileOnly("org.projectlombok:lombok")
+        annotationProcessor("org.projectlombok:lombok")
+        implementation("org.springframework.boot:spring-boot-starter-web")
+        implementation("com.bell.itsa.sharp:commonLib-event:${commonLib_event}")
+        implementation("ca.bell.itsa.sharp.common-lib:common-cache:${common_lib_cache_version}")
+        implementation("ca.bell.itsa.sharp.common-lib:common-util:${common_lib_util_version}")
+        implementation("ca.bell.itsa.sharp.tmf:tmf-model:${tmf_version}")
+        implementation("net.logstash.logback:logstash-logback-encoder:${logstash_logback_encoder_version}")
+        testCompileOnly("org.projectlombok:lombok")
+        testAnnotationProcessor("org.projectlombok:lombok")
+    }
+
+    repositories {
+        maven {
+            url = "${artifactory_url}"
+            credentials {
+                username = "${sharpServiceAssuranceUsername}"
+                password = "${sharpServiceAssurancePassword}"
+            }
+        }
+    }
+
+    spotless {
+        ratchetFrom 'origin/main'
+        java {
+            target 'src/**/*.java'
+            palantirJavaFormat("${palantir_java_format_version}")
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        dependsOn tasks.spotlessApply
+    }
+
+    tasks.withType(Test) {
+        useJUnitPlatform {
+            includeTags("UnitTest")
+        }
+        finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
+    }
+
+    tasks.jacocoTestReport {
+        dependsOn(tasks.test) // tests are required to run before generating the report
+        reports {
+            xml.required.set(true)
+        }
+    }
+}

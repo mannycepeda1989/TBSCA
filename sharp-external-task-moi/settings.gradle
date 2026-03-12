@@ -1,0 +1,21 @@
+pluginManagement {
+
+    plugins {
+        id 'org.springframework.boot' version "${spring_boot_version}"
+        id 'io.spring.dependency-management' version "${spring_dependency_management_version}"
+        id 'org.sonarqube' version "${sonarqube_version}"
+        id 'com.diffplug.spotless' version "${spotless_plugin_version}"
+    }
+
+    repositories {
+        maven {
+            url = "${artifactory_url}"
+            credentials {
+                username = "${sharpServiceAssuranceUsername}"
+                password = "${sharpServiceAssurancePassword}"
+            }
+        }
+    }
+}
+rootProject.name = 'sharp-external-task-moi'
+include('moi-persistence', 'moi-task-application')
